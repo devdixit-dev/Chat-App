@@ -33,6 +33,12 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
   console.log(`New user connected: ${socket.id}`);
 
+  socket.on('sendMessage', (message) => {
+    console.log(`Received message: ${message}`);
+    // Broadcast to everyone except the sender
+    socket.broadcast.emit('receiveMessage', `User ${socket.id.slice(0, 4)}: ${message}`);
+  })
+
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
   })
