@@ -5,14 +5,10 @@ import 'dotenv/config';
 import http from 'http';
 import { Server } from 'socket.io';
 
-import connectionToDB from './config/database'
-
 const app = express();
 const server = http.createServer(app);
 
 const PORT = process.env.PORT || 5000;
-
-connectionToDB();
 
 const io = new Server(server, {
   cors: {
@@ -22,7 +18,12 @@ const io = new Server(server, {
   },
 });
 
-app.use(cors());
+const corsOptions = {
+  origin: 'http://localhost:5173',
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes
@@ -31,17 +32,16 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log(`New user connected: ${socket.id}`);
+  console.log(`${socket.id} connected`);
 
-  socket.on('sendMessage', (message) => {
-    console.log(`Received message: ${message}`);
-    // Broadcast to everyone except the sender
-    socket.broadcast.emit('receiveMessage', `User ${socket.id.slice(0, 4)}: ${message}`);
-  })
+  socket.on('message', (data) => {
+    console.log(data);
+    io.emit('message', data);
+  });
 
   socket.on('disconnect', () => {
-    console.log(`User disconnected: ${socket.id}`);
-  })
+    console.log(`${socket.id} disconnected`);
+  });
 })
 
 server.listen(PORT, () => {
